@@ -142,5 +142,60 @@ public class QuizSetService {
                 .build();
     }
 
+    public void autoGenerateQuizSet() {
+
+        long unsolvedCount = quizSetRepository.countBySolvedFalse();
+
+        // 3개 이상이면 생성 안 함
+        if (unsolvedCount >= 3) {
+            System.out.println("[자동 생성] 현재 '안 푼' QuizSet 개수 = " + unsolvedCount + " → 생성 스킵");
+            return;
+        }
+
+        // 레벨 enum 실제 값에 맞춰서 수정!
+        QuizSet.Level defaultLevel = QuizSet.Level.BEGINNER;
+
+        // 랜덤 타이틀 생성
+        String title = generateRandomTitle();
+
+        QuizSetGenerateRequest request = QuizSetGenerateRequest.builder()
+                .title(title)
+                .level(defaultLevel.name())
+                .count(6)
+                .build();
+
+        System.out.println("[자동 생성] 새 QuizSet 생성 시도 → title=" + title);
+
+        generateQuizSetByAi(request);
+    }
+
+
+    private String generateRandomTitle() {
+        int idx = (int) (Math.random() * RANDOM_TITLES.size());
+        return RANDOM_TITLES.get(idx);
+    }
+
+    private static final List<String> RANDOM_TITLES = List.of(
+            "오늘의 한국어 도전",
+            "쉬운 한국어 퀴즈",
+            "기본 문장 익히기",
+            "단어 연습 세트",
+            "왕초보 문장 만들기",
+            "한글 감 잡기",
+            "간단한 표현 배우기",
+            "기초 회화 연습",
+            "문장 순서 맞추기",
+            "단어 조합 연습",
+            "한국어 첫걸음",
+            "간단 문장 도전",
+            "문장 만들기 연습",
+            "데일리 한국어 퀴즈",
+            "한국어 교정 연습",
+            "핵심 단어 익히기",
+            "오늘의 표현",
+            "문장 구성 훈련",
+            "한국어 기초 완성",
+            "짧은 문장 연습"
+    );
 
 }
