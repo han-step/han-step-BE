@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -35,10 +36,14 @@ public class MyInfoService {
 
         MemberProfile saved = memberProfileRepository.save(profile);
 
+        QuizStats stats = calculateQuizStats();
+
         return MyInfoResponse.builder()
                 .id(saved.getId())
                 .name(saved.getName())
                 .koreanLevel(saved.getKoreanLevel())
+                .solvedQuizCount(stats.solvedQuizCount())
+                .solvedQuizSetCount(stats.solvedQuizSetCount())
                 .build();
     }
 
@@ -47,10 +52,14 @@ public class MyInfoService {
         MemberProfile profile = memberProfileRepository.findTopByOrderByIdAsc()
                 .orElseThrow(() -> new IllegalStateException("등록된 내 정보가 없습니다. 먼저 등록해 주세요."));
 
+        QuizStats stats = calculateQuizStats();
+
         return MyInfoResponse.builder()
                 .id(profile.getId())
                 .name(profile.getName())
                 .koreanLevel(profile.getKoreanLevel())
+                .solvedQuizCount(stats.solvedQuizCount())
+                .solvedQuizSetCount(stats.solvedQuizSetCount())
                 .build();
     }
 
@@ -86,4 +95,32 @@ public class MyInfoService {
                 .briefing(briefing)
                 .build();
     }
+
+    /**
+     * 내가 푼 퀴즈/퀴즈셋 통계 계산
+     * - solvedQuizSetCount : isSolved == true 인 QuizSet 개수
+     * - solvedQuizCount    : isSolved == true 인 QuizSet 들의 totalCount 합
+     */
+    private QuizStats calculateQuizStats() {
+        List<QuizSet> allQuizSets = quizSetRepository.findAll();
+
+        long solvedQuizSetCountLong = allQuizSets.stream()
+                .filter(QuizSet::isSolved)
+                .count();
+
+        long solvedQuizCountLong = allQuizSets.stream()
+                .filter(QuizSet::isSolved)
+                .mapToLong(qs -> qs.getTotalCount() == null ? 0 : qs.getTotalCount())
+                .sum();
+
+        // 여기서 int로 캐스팅 (실제 값이 int 범위 안이라고 가정)
+        int solvedQuizSetCount = (int) solvedQuizSetCountLong;
+        int solvedQuizCount = (int) solvedQuizCountLong;
+
+        return new QuizStats(solvedQuizCount, solvedQuizSetCount);
+    }
+
+    // DTO와 맞게 int 타입으로 record 정의
+    private record QuizStats(int solvedQuizCount, int solvedQuizSetCount) {}
 }
+
