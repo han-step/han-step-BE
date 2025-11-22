@@ -95,6 +95,30 @@ public class MyInfoService {
                 .briefing(briefing)
                 .build();
     }
+    @Transactional
+    public MyInfoResponse updateMyInfo(MyInfoRequest request) {
+
+        MemberProfile profile = memberProfileRepository.findTopByOrderByIdAsc()
+                .orElseThrow(() -> new IllegalStateException("등록된 내 정보가 없습니다. 먼저 등록해 주세요."));
+
+        // 기존 profile 값 업데이트
+        profile.update(
+                request.getName(),
+                MemberProfile.KoreanLevel.valueOf(request.getKoreanLevel())
+        );
+
+        // JPA dirty checking 으로 자동 업데이트
+        QuizStats stats = calculateQuizStats();
+
+        return MyInfoResponse.builder()
+                .id(profile.getId())
+                .name(profile.getName())
+                .koreanLevel(profile.getKoreanLevel())
+                .solvedQuizCount(stats.solvedQuizCount())
+                .solvedQuizSetCount(stats.solvedQuizSetCount())
+                .build();
+    }
+
 
     /**
      * 내가 푼 퀴즈/퀴즈셋 통계 계산

@@ -28,5 +28,9 @@ public class MyInfoController {
     public MyBriefingResponse getMyBriefing() {
         return myInfoService.getMyBriefing();
     }
+    @PutMapping
+    public MyInfoResponse updateMyInfo(@RequestBody MyInfoRequest request) {
+        return myInfoService.updateMyInfo(request);
+    }
 }
 
