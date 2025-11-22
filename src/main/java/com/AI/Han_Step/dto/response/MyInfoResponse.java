@@ -11,4 +11,8 @@ public class MyInfoResponse {
     private Long id;
     private String name;
     private MemberProfile.KoreanLevel koreanLevel;
+
+    private int solvedQuizCount;      // 내가 푼 퀴즈 총 개수
+    private int solvedQuizSetCount;   // 내가 푼 퀴즈셋 개수
+
 }
