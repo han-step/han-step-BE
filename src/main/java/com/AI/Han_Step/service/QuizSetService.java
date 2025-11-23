@@ -1,14 +1,12 @@
 package com.AI.Han_Step.service;
 
+import com.AI.Han_Step.domain.MemberProfile;
 import com.AI.Han_Step.domain.Quiz;
 import com.AI.Han_Step.domain.QuizSet;
 import com.AI.Han_Step.domain.QuizType;
 import com.AI.Han_Step.dto.request.QuizSetGenerateRequest;
 import com.AI.Han_Step.dto.request.QuizSubmitRequest;
-import com.AI.Han_Step.dto.response.QuizSetDetailResponse;
-import com.AI.Han_Step.dto.response.QuizSetGenerateResponse;
-import com.AI.Han_Step.dto.response.QuizSetListResponse;
-import com.AI.Han_Step.dto.response.QuizSubmitResponse;
+import com.AI.Han_Step.dto.response.*;
 import com.AI.Han_Step.repository.QuizRepository;
 import com.AI.Han_Step.repository.QuizSetRepository;
 import com.AI.Han_Step.service.ai.AiGeneratedQuiz;
@@ -27,6 +25,7 @@ public class QuizSetService {
     private final QuizSetRepository quizSetRepository;
     private final QuizRepository quizRepository;
     private final QuizAiClient quizAiClient;
+    private final MyInfoService myInfoService;
 
     /**
      * AI로 퀴즈 세트를 생성하고 DB에 QuizSet + Quiz 저장
@@ -152,22 +151,22 @@ public class QuizSetService {
             return;
         }
 
-        // 레벨 enum 실제 값에 맞춰서 수정!
-        QuizSet.Level defaultLevel = QuizSet.Level.BEGINNER;
+        QuizSet.Level userLevel = getUserLevelFromMyInfo();
 
         // 랜덤 타이틀 생성
         String title = generateRandomTitle();
 
         QuizSetGenerateRequest request = QuizSetGenerateRequest.builder()
                 .title(title)
-                .level(defaultLevel.name())
+                .level(userLevel.name())
                 .count(6)
                 .build();
 
-        System.out.println("[자동 생성] 새 QuizSet 생성 시도 → title=" + title);
+        System.out.println("[자동 생성] 새 QuizSet 생성 시도 → title=" + title + ", level=" + userLevel);
 
         generateQuizSetByAi(request);
     }
+
 
 
     private String generateRandomTitle() {
@@ -197,5 +196,24 @@ public class QuizSetService {
             "한국어 기초 완성",
             "짧은 문장 연습"
     );
+
+    private QuizSet.Level getUserLevelFromMyInfo() {
+
+        try {
+            MyInfoResponse myInfo = myInfoService.getMyInfo(); // 등록 안 되어 있으면 예외
+
+            MemberProfile.KoreanLevel koreanLevel = myInfo.getKoreanLevel();
+            if (koreanLevel == null) {
+                return QuizSet.Level.BEGINNER;
+            }
+
+
+            return QuizSet.Level.valueOf(koreanLevel.name());
+
+        } catch (Exception e) {
+            // 내 정보가 없거나, 매핑 실패하면 안전하게 기본값
+            return QuizSet.Level.BEGINNER;
+        }
+    }
 
 }
